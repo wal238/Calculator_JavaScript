@@ -19,13 +19,16 @@ const del = document.getElementById('delete');
 const multp = document.getElementById('multiply');
 const div = document.getElementById('divison');
 const eq = document.getElementById('equal');
+const decimal = document.getElementById('fraction');
 //Gets the expression (aka input)
 const usrInp = document.querySelector('.result');
 let exp = '';
 
-//Make a list of keycodes in which we can't enter
-const validKeys= ['0', '1', '2', '3', '4', '5', '6', '7','8','9', ' ', '+', '-','/','x', '(', ')'];
-//const validKeyCodes = [48, 49, 50, 51,52,53,54,55,56,57,32];
+//We are gonna use a variable to store whether or not the expression has been evaluated or not
+let evaluation = false;
+
+//Make a list of keycodes in which we can enter
+const validKeys= ['0', '1', '2', '3', '4', '5', '6', '7','8','9', ' ', '+', '-','/','x', '(', ')', '.'];
 
 //Checks if the input given by the user's keyboard is a number in our valid key list
 const checkValidKey = function (event) {
@@ -37,51 +40,58 @@ const checkValidKey = function (event) {
     }
     return false;
 };
-//Checks if any key is pressed
-/* usrInp.addEventListener('keydown',  function(e) {
-    const expEnd = exp.length;
-    const tempExp = exp.slice(0, length-1);
-    console.log(exp, 'this is value if exp before anything even happens');
-    if (checkValidKey(e.key)) {
-        exp += e.key;
-        console.log(exp, 'value of exp when a valid num is inputted');
+
+const numOfExpCheck = function(num) {
+    numLen = num.length;
+    if (num == 1) {
+        return true;
     }
-    if (e.key == 'BackSpace') {
-        exp = tempExp;
-        console.log(exp, 'this is when backspace occurs');
+    else {
+        return false
     }
-}); */
+}
 
 //Whenever an input is given on the keyboard
 usrInp.addEventListener('keydown', function(e) {
     const key = e.keyCode || e.charCode;
     //Updates the expressio if char is deleted
+    if (evaluation) {
+        evaluation = false;
+        usrInp.value = '';
+    }
     if (checkValidKey(e.key)) {
         exp += e.key;
         console.log(exp);
     }  else if (key == 8) {
-        const expLen = exp.length
+        const expLen = exp.length;
         exp = exp.slice(0, expLen-1);
+        console.log(exp);
+    } else if (e.key == '=') {
+        //If the user inputs equal what we are gonna do is evaluate the given expression
+        evaluation = true;
+        const tempExp = prepareForEval(exp);
+        usrInp.value = Math.round(evaluateExp(tempExp) * 1e12) / 1e12;
+        exp = '';
+
     }
 });
 
-//initialze numbers
-let result = 0;
 
 //a function to update our expression whenever a button is clicked
 const updateExp = function (num) {
-    const val = num;
-    exp += val;
-    usrInp.value = exp;
+    if (!evaluation) {
+        const val = num;
+        exp += val;
+        usrInp.value = exp;
 
+    } else {
+        evaluation = false;
+        usrInp.value = '';
+    }
 }
 
- /* const deleteLast = function () {
-    let tempExp = exp.split(' ');
-    tempExp.pop();
-    exp = tempExp.join(' ');
-}
-*/
+
+
 //Deletes the last input given
 const deleteLast = function () {
     let end = exp.length;
@@ -96,19 +106,16 @@ const updateOperator = function(op) {
 }
 
 //evaluates the result
-const evaluateExp = function(expression) {
-    let tempExp = exp.split(' ');
-    console.log(tempExp);
-    let resultTemp = 0;
-    let tempOperator = ' ';
-    for (let i = 0; i<tempExp.length; i++) {
-        if (tempExp[i] != NaN) {
-            tempExp = tempExp[i];
-        } else if (tempExp[i] )
-
-    }
-
+const evaluateExp = function(str) {
+    const val = eval(str);
+    return val;
 };
+//prepares our exp string to be ready to be calculated by removing non useable chars and converting to useable
+const prepareForEval = function(str) {
+    const tempExp = exp.replace(/x/g, "*");
+    const finalExp = tempExp.replace(/[^-()\d/*+.]/g, '');
+    return finalExp;
+}
 
 //Test Function, let's see if hitting one updates the input text;
 zeroNum.addEventListener('click', function() {
@@ -157,6 +164,10 @@ div.addEventListener('click', function() {
     updateOperator(' / ');
 });
 
+decimal.addEventListener('click', function() {
+    updateOperator('.');
+});
+
 //Deletes one char at a time when the button is clicked
 del.addEventListener('click', function() {
     deleteLast();
@@ -165,7 +176,14 @@ del.addEventListener('click', function() {
 
 //Calculates the result
 eq.addEventListener('click', function() {
-    evaluateExp(exp);
-})
+    evaluation = true;
+    const tempExp = prepareForEval(exp);
+    usrInp.value = Math.round(evaluateExp(tempExp) * 1e12) / 1e12; //fixes rounding error 
+    exp = '';
+});
 
+
+/* what should happen after we get our result?? our expression should be changed back to empty and we want to do is next time
+the user enters anything we go back to a blank screen
+*/
 
